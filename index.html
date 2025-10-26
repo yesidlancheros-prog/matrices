@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora de Matrices</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #121212;
+      color: #f1f1f1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #00bcd4;
+      margin-bottom: 10px;
+    }
+
+    .container {
+      background-color: #1e1e1e;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0,188,212,0.3);
+      width: 90%;
+      max-width: 700px;
+      text-align: center;
+    }
+
+    .matrices-container {
+      display: flex;
+      gap: 30px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+
+    .matrix {
+      display: grid;
+      gap: 8px;
+    }
+
+    input[type="number"] {
+      width: 50px;
+      height: 40px;
+      background: #2c2c2c;
+      border: 1px solid #444;
+      color: #fff;
+      text-align: center;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    select, button {
+      background-color: #00bcd4;
+      color: #fff;
+      border: none;
+      padding: 10px 15px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+      margin: 5px;
+    }
+
+    select:hover, button:hover {
+      background-color: #0097a7;
+    }
+
+    .resultado {
+      margin-top: 20px;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin: 0 auto;
+    }
+
+    td {
+      border: 1px solid #00bcd4;
+      padding: 10px;
+      width: 50px;
+      text-align: center;
+      border-radius: 6px;
+    }
+
+    #resultado table {
+      animation: aparecer 0.5s ease-in-out;
+    }
+
+    @keyframes aparecer {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    #historial {
+      margin-top: 25px;
+      background: #1b1b1b;
+      border-radius: 10px;
+      padding: 15px;
+      max-height: 200px;
+      overflow-y: auto;
+      text-align: left;
+    }
+
+    #historial h3 {
+      color: #00bcd4;
+      margin-top: 0;
+    }
+
+    .historial-item {
+      border-bottom: 1px solid #333;
+      padding: 8px 0;
+      font-size: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧮 Calculadora de Matrices</h1>
+  <div class="container">
+    <div>
+      <label for="size">Tamaño:</label>
+      <select id="size" onchange="crearMatrices()">
+        <option value="2">2 x 2</option>
+        <option value="3">3 x 3</option>
+      </select>
+    </div>
+
+    <div class="matrices-container">
+      <div id="matrixA" class="matrix"></div>
+      <div id="matrixB" class="matrix"></div>
+    </div>
+
+    <div>
+      <select id="operation">
+        <option value="sumar">Sumar</option>
+        <option value="restar">Restar</option>
+        <option value="multiplicar">Multiplicar</option>
+      </select>
+      <button onclick="calcular()">Calcular</button>
+      <button onclick="limpiarHistorial()">🗑 Limpiar Historial</button>
+    </div>
+
+    <div class="resultado">
+      <h2>Resultado:</h2>
+      <div id="resultado"></div>
+    </div>
+
+    <div id="historial">
+      <h3>Historial de operaciones</h3>
+      <div id="listaHistorial"></div>
+    </div>
+  </div>
+
+  <script>
+    let historial = [];
+
+    function crearMatrices() {
+      const size = parseInt(document.getElementById('size').value);
+      const matrices = ['matrixA', 'matrixB'];
+      matrices.forEach(id => {
+        const cont = document.getElementById(id);
+        cont.innerHTML = '';
+        cont.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+        for (let i = 0; i < size * size; i++) {
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.value = 0;
+          cont.appendChild(input);
+        }
+      });
+    }
+
+    function obtenerMatriz(id) {
+      const inputs = document.getElementById(id).getElementsByTagName('input');
+      const size = Math.sqrt(inputs.length);
+      const matriz = [];
+      for (let i = 0; i < size; i++) {
+        const fila = [];
+        for (let j = 0; j < size; j++) {
+          fila.push(parseFloat(inputs[i * size + j].value));
+        }
+        matriz.push(fila);
+      }
+      return matriz;
+    }
+
+    function mostrarResultado(matriz) {
+      const cont = document.getElementById('resultado');
+      cont.innerHTML = '';
+      const table = document.createElement('table');
+      matriz.forEach(fila => {
+        const tr = document.createElement('tr');
+        fila.forEach(valor => {
+          const td = document.createElement('td');
+          td.textContent = valor;
+          tr.appendChild(td);
+        });
+        table.appendChild(tr);
+      });
+      cont.appendChild(table);
+    }
+
+    function guardarHistorial(operacion, matriz) {
+      const registro = {
+        fecha: new Date().toLocaleTimeString(),
+        op: operacion,
+        resultado: matriz
+      };
+      historial.push(registro);
+      actualizarHistorial();
+    }
+
+    function actualizarHistorial() {
+      const lista = document.getElementById('listaHistorial');
+      lista.innerHTML = '';
+      historial.slice().reverse().forEach(item => {
+        const div = document.createElement('div');
+        div.classList.add('historial-item');
+        div.innerHTML = `<strong>${item.fecha}</strong> ➜ ${item.op}<br>Resultado: [${item.resultado.map(f => f.join(', ')).join(' | ')}]`;
+        lista.appendChild(div);
+      });
+    }
+
+    function limpiarHistorial() {
+      historial = [];
+      actualizarHistorial();
+    }
+
+    function calcular() {
+      const A = obtenerMatriz('matrixA');
+      const B = obtenerMatriz('matrixB');
+      const op = document.getElementById('operation').value;
+      const size = A.length;
+      const R = Array(size).fill().map(() => Array(size).fill(0));
+
+      if (op === 'sumar' || op === 'restar') {
+        for (let i = 0; i < size; i++) {
+          for (let j = 0; j < size; j++) {
+            R[i][j] = op === 'sumar' ? A[i][j] + B[i][j] : A[i][j] - B[i][j];
+          }
+        }
+      } else if (op === 'multiplicar') {
+        for (let i = 0; i < size; i++) {
+          for (let j = 0; j < size; j++) {
+            let suma = 0;
+            for (let k = 0; k < size; k++) {
+              suma += A[i][k] * B[k][j];
+            }
+            R[i][j] = suma;
+          }
+        }
+      }
+
+      mostrarResultado(R);
+      guardarHistorial(op, R);
+    }
+
+    crearMatrices();
+  </script>
+</body>
+</html>
